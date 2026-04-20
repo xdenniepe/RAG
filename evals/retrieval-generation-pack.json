@@ -1,0 +1,162 @@
+[
+  {
+    "id": "eval-01",
+    "merchantId": "demo-merchant",
+    "brief": "Generate pairings for a seafood-forward menu with bright acidity wines.",
+    "expectedRestaurantFacts": ["seafood", "menu"],
+    "expectedWineFacts": ["acidity", "pairing"],
+    "expectedSourceTypes": ["ops", "restaurant"]
+  },
+  {
+    "id": "eval-02",
+    "merchantId": "demo-merchant",
+    "brief": "Create elegant copy for a premium Italian restaurant tasting menu.",
+    "expectedRestaurantFacts": ["italian", "premium"],
+    "expectedWineFacts": ["region", "producer"],
+    "expectedSourceTypes": ["ops", "restaurant"]
+  },
+  {
+    "id": "eval-03",
+    "merchantId": "demo-merchant",
+    "brief": "Recommend copy angles for spicy dishes and bold red wines.",
+    "expectedRestaurantFacts": ["spicy", "dish"],
+    "expectedWineFacts": ["bold", "red"],
+    "expectedSourceTypes": ["ops", "restaurant"]
+  },
+  {
+    "id": "eval-04",
+    "merchantId": "demo-merchant",
+    "brief": "Write concise by-the-glass menu descriptions for approachable house wines.",
+    "expectedRestaurantFacts": ["menu", "approachable"],
+    "expectedWineFacts": ["house", "wine"],
+    "expectedSourceTypes": ["ops"]
+  },
+  {
+    "id": "eval-05",
+    "merchantId": "demo-merchant",
+    "brief": "Generate featured wine promo copy for weekend dinner service.",
+    "expectedRestaurantFacts": ["dinner", "service"],
+    "expectedWineFacts": ["featured", "promo"],
+    "expectedSourceTypes": ["ops", "restaurant"]
+  },
+  {
+    "id": "eval-06",
+    "merchantId": "demo-merchant",
+    "brief": "Create pairings for grilled meats and aged cheese plates.",
+    "expectedRestaurantFacts": ["grilled", "cheese"],
+    "expectedWineFacts": ["pairing", "tannin"],
+    "expectedSourceTypes": ["ops", "restaurant"]
+  },
+  {
+    "id": "eval-07",
+    "merchantId": "demo-merchant",
+    "brief": "Write copy for a modern steakhouse that wants warm and approachable tone.",
+    "expectedRestaurantFacts": ["steakhouse", "tone"],
+    "expectedWineFacts": ["cabernet", "body"],
+    "expectedSourceTypes": ["ops", "restaurant"]
+  },
+  {
+    "id": "eval-08",
+    "merchantId": "demo-merchant",
+    "brief": "Suggest pairings for rich pasta dishes and truffle-focused plates.",
+    "expectedRestaurantFacts": ["pasta", "truffle"],
+    "expectedWineFacts": ["earthy", "pairing"],
+    "expectedSourceTypes": ["ops", "restaurant"]
+  },
+  {
+    "id": "eval-09",
+    "merchantId": "demo-merchant",
+    "brief": "Draft concise promotional copy for a new pinot noir feature.",
+    "expectedRestaurantFacts": ["feature", "promotion"],
+    "expectedWineFacts": ["pinot noir", "tasting"],
+    "expectedSourceTypes": ["ops"]
+  },
+  {
+    "id": "eval-10",
+    "merchantId": "demo-merchant",
+    "brief": "Generate pairing bullets for creamy seafood and citrus dishes.",
+    "expectedRestaurantFacts": ["seafood", "citrus"],
+    "expectedWineFacts": ["acidity", "white wine"],
+    "expectedSourceTypes": ["ops", "restaurant"]
+  },
+  {
+    "id": "eval-11",
+    "merchantId": "demo-merchant",
+    "brief": "Write upscale but friendly copy for a chef tasting experience.",
+    "expectedRestaurantFacts": ["chef", "tasting"],
+    "expectedWineFacts": ["producer", "region"],
+    "expectedSourceTypes": ["ops", "restaurant"]
+  },
+  {
+    "id": "eval-12",
+    "merchantId": "demo-merchant",
+    "brief": "Create wine menu descriptions that avoid technical jargon.",
+    "expectedRestaurantFacts": ["tone", "menu"],
+    "expectedWineFacts": ["claims", "concise"],
+    "expectedSourceTypes": ["ops", "restaurant"]
+  },
+  {
+    "id": "eval-13",
+    "merchantId": "demo-merchant",
+    "brief": "Recommend pairings for spicy grilled fish and herb sauces.",
+    "expectedRestaurantFacts": ["fish", "herb"],
+    "expectedWineFacts": ["pairing", "freshness"],
+    "expectedSourceTypes": ["ops", "restaurant"]
+  },
+  {
+    "id": "eval-14",
+    "merchantId": "demo-merchant",
+    "brief": "Generate premium featured copy for a reserve red by the bottle.",
+    "expectedRestaurantFacts": ["premium", "bottle"],
+    "expectedWineFacts": ["reserve", "red"],
+    "expectedSourceTypes": ["ops"]
+  },
+  {
+    "id": "eval-15",
+    "merchantId": "demo-merchant",
+    "brief": "Create pairings for umami-heavy dishes and mushroom plates.",
+    "expectedRestaurantFacts": ["umami", "mushroom"],
+    "expectedWineFacts": ["earthy", "structure"],
+    "expectedSourceTypes": ["ops", "restaurant"]
+  },
+  {
+    "id": "eval-16",
+    "merchantId": "demo-merchant",
+    "brief": "Write short wine menu blurbs for a contemporary sushi bar.",
+    "expectedRestaurantFacts": ["sushi", "contemporary"],
+    "expectedWineFacts": ["crisp", "white"],
+    "expectedSourceTypes": ["ops", "restaurant"]
+  },
+  {
+    "id": "eval-17",
+    "merchantId": "demo-merchant",
+    "brief": "Create promotional copy for a rotating seasonal wine list.",
+    "expectedRestaurantFacts": ["seasonal", "list"],
+    "expectedWineFacts": ["rotation", "feature"],
+    "expectedSourceTypes": ["ops", "restaurant"]
+  },
+  {
+    "id": "eval-18",
+    "merchantId": "demo-merchant",
+    "brief": "Generate pairings for charcuterie boards and cured meats.",
+    "expectedRestaurantFacts": ["charcuterie", "cured meats"],
+    "expectedWineFacts": ["pairing", "savory"],
+    "expectedSourceTypes": ["ops", "restaurant"]
+  },
+  {
+    "id": "eval-19",
+    "merchantId": "demo-merchant",
+    "brief": "Write elegant copy for a celebration wine spotlight.",
+    "expectedRestaurantFacts": ["celebration", "spotlight"],
+    "expectedWineFacts": ["sparkling", "occasion"],
+    "expectedSourceTypes": ["ops"]
+  },
+  {
+    "id": "eval-20",
+    "merchantId": "demo-merchant",
+    "brief": "Recommend pairings and copy direction for a farm-to-table menu.",
+    "expectedRestaurantFacts": ["farm-to-table", "menu"],
+    "expectedWineFacts": ["fresh", "regional"],
+    "expectedSourceTypes": ["ops", "restaurant"]
+  }
+]
