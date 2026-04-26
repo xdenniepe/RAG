@@ -1,9 +1,22 @@
 import Link from "next/link";
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 
 import { OpsDashboardClient } from "@/components/ops-dashboard-client";
 import { Button } from "@/components/ui/button";
+import { getOnboardingStatus } from "@/lib/onboarding/server";
 
-export default function OpsDashboardPage() {
+export default async function OpsDashboardPage() {
+  const { userId } = await auth();
+  if (!userId) {
+    redirect("/auth/sign-in");
+  }
+
+  const onboarding = await getOnboardingStatus(userId);
+  if (!onboarding.isCompleted) {
+    redirect("/onboarding");
+  }
+
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-8 px-6 py-10">
       <div className="space-y-2">

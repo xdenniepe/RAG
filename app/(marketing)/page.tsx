@@ -22,7 +22,7 @@ export default function MarketingPage() {
           </div>
           <div className="flex flex-wrap gap-3">
             <Button asChild>
-              <Link href="/dashboard">Open role dashboard</Link>
+              <Link href="/auth/sign-in">Sign in</Link>
             </Button>
             <Button variant="secondary" asChild>
               <Link href="/dashboard/ops">Ops ingestion</Link>

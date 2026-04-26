@@ -22,6 +22,38 @@ const generatedPageComponentSchema = z.object({
   items: z.array(z.string().trim().min(1)).default([]),
 });
 
+const menuArtifactWineItemSchema = z.object({
+  wineName: z.string().trim().min(1),
+  description: z.string().trim().min(1),
+  pairing: z.string().trim().min(1),
+  imageUrl: z.string().trim().url().optional(),
+  imageAlt: z.string().trim().optional(),
+});
+
+const menuArtifactSectionSchema = z.object({
+  title: z.string().trim().min(1),
+  wines: z.array(menuArtifactWineItemSchema).default([]),
+});
+
+export const generatedMenuArtifactSchema = z.object({
+  menu: z.object({
+    header: z.object({
+      title: z.string().trim().min(1),
+      subtitle: z.string().trim().min(1),
+    }),
+    sections: z.array(menuArtifactSectionSchema).default([]),
+    featuredWine: z
+      .object({
+        wineName: z.string().trim().min(1),
+        highlight: z.string().trim().min(1),
+        pairing: z.string().trim().min(1),
+        imageUrl: z.string().trim().url().optional(),
+        imageAlt: z.string().trim().optional(),
+      })
+      .optional(),
+  }),
+});
+
 export const generatedMenuPageSchema = z.object({
   page: z.object({
     hero: z.object({
@@ -132,3 +164,4 @@ export const structuredDraftSchema = z.object({
 export type StructuredDraft = z.infer<typeof structuredDraftSchema>;
 export type MarketingCopyResult = z.infer<typeof marketingCopyResultSchema>;
 export type GeneratedMenuPage = z.infer<typeof generatedMenuPageSchema>;
+export type GeneratedMenuArtifact = z.infer<typeof generatedMenuArtifactSchema>;

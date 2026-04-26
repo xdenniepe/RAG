@@ -7,89 +7,79 @@ export function buildMarketingPrompt(params: {
   const draftJson = JSON.stringify(params.draft, null, 2);
 
   return `
-  You are a hospitality copywriter and menu designer.
+    You are a hospitality copywriter and wine menu editor.
 
-Your job is to CREATE a finished, customer-facing wine menu layout — not describe it.
+    Your job is to create a finished, customer-facing wine menu from grounded inputs.
 
----
+    This is a real restaurant wine menu.
+    The output must show all available wines for the restaurant and clearly match each wine to the best food pairing from the merchant's menu.
 
-User brief:
-${params.brief}
+    User brief:
+    ${params.brief}
 
-Structured draft:
-${draftJson}
+    Structured draft:
+    ${draftJson}
 
----
+    Rules:
+    - Return JSON only. No markdown, no code fences, no commentary.
+    - Do not invent wine facts. Use only grounded details from the draft.
+    - Include all available wines provided in the draft whenever possible.
+    - Organize wines into clear menu sections such as Red Wines, White Wines, Rosé, Sparkling, or By the Glass.
+    - Keep copy concise, menu-ready, and easy to scan.
+    - For each wine, identify the single best pairing from the merchant's restaurant menu.
+    - If supported by the draft, include 1 to 2 alternate pairings.
+    - Pairings must reference real dishes from the merchant's menu, not generic dish ideas.
+    - Prioritize clarity and usefulness for diners choosing wine with food.
+    - Do not include internal labels such as "visual direction", "rationale", "notes", or explanatory text.
+    - Do not output page planning language or design instructions.
+    - Write like a real restaurant wine menu, not a product card or internal content draft.
 
-CORE OBJECTIVE:
-Produce a polished, ready-to-render wine menu page that:
-- Feels like a real restaurant menu or marketing page
-- Matches the restaurant’s tone and brand
-- Aligns wines with the restaurant’s food
-- Is clean, structured, and visually intuitive
-
----
-
-STRICT RULES:
-
-- Do NOT explain anything
-- Do NOT include labels like “Visual direction”, “Rationale”, or “Notes”
-- Do NOT describe what should be done
-- ONLY produce final content as it would appear to a customer
-
-- Keep language concise and premium
-- Avoid generic phrases
-- Do not invent wine facts
-
----
-
-OUTPUT STYLE:
-
-Think in real UI sections:
-- Headline / hero
-- Short intro
-- Wine sections
-- Pairings integrated naturally
-- Featured highlight (if relevant)
-
-Make it feel like:
-👉 a menu page
-👉 a website section
-👉 something a restaurant would actually use
-
----
-
-RETURN JSON ONLY:
-
-{
-  "page": {
-    "hero": {
-      "headline": "string",
-      "subheadline": "string"
-    },
-
-    "intro": "short paragraph",
-
-    "wineSections": [
-      {
-        "title": "e.g. By the Glass / Featured Selection",
-
-        "items": [
+    Output must match this exact JSON schema:
+    {
+      "wineMenu": {
+        "title": "string",
+        "subtitle": "string",
+        "sections": [
           {
-            "wineName": "string",
-            "description": "short, elegant menu copy",
-            "pairing": "natural inline pairing sentence"
+            "sectionName": "string",
+            "wines": [
+              {
+                "wineName": "string",
+                "wineStyle": "string",
+                "description": "string",
+                "bestPairing": {
+                  "dishName": "string",
+                  "pairingText": "string"
+                },
+                "alternatePairings": ["string"],
+                "imageUrl": "https://example.com/image.jpg",
+                "imageAlt": "string"
+              }
+            ]
           }
         ]
       }
-    ],
-
-    "featuredBlock": {
-      "headline": "optional",
-      "text": "short promotional copy"
     }
-  }
-}
+
+    Field constraints:
+    - "wineMenu.title": short customer-facing menu title.
+    - "wineMenu.subtitle": one concise supporting line in the merchant's tone.
+    - "sections": include all relevant wine categories supported by the draft.
+    - Each wine must include:
+      - "wineName"
+      - "wineStyle"
+      - "description"
+      - "bestPairing"
+    - "description": 1 to 2 short sentences max.
+    - "bestPairing.dishName": exact restaurant dish name when available.
+    - "bestPairing.pairingText": short helpful pairing sentence.
+    - "alternatePairings": optional, omit if unsupported.
+    - "imageUrl" optional, omit if unavailable.
+    - "imageAlt" only when "imageUrl" is included.
+
+    Quality bar:
+    - The output should read like a polished restaurant wine list.
+    - A diner should be able to scan the menu and quickly decide which wine goes with which dish.
 `
 .trim();
 }

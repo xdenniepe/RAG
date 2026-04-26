@@ -6,6 +6,7 @@ import { extractStructuredData } from "@/lib/ingestion/extract-structured-data";
 import { parseFileToText } from "@/lib/ingestion/extract-text";
 import { NORMALIZATION_VERSION, normalizeExtractionBlocks } from "@/lib/ingestion/normalize";
 import { IngestionInput, SOURCE_TYPES, StructuredExtractionResult } from "@/lib/ingestion/types";
+import { WineImportRow } from "@/lib/ops-import/schema";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import { insertDocumentChunk } from "@/lib/supabase/vector";
 
@@ -164,67 +165,25 @@ async function persistStructuredData(params: {
     })),
   });
 
-  const wineIdsByName = new Map<string, string>();
-  if (extracted.wines.length) {
-    const supabase = getSupabaseAdminClient();
-    for (const wine of extracted.wines) {
-      const normalizedName = wine.name.trim();
-      if (!normalizedName) continue;
-
-      const { data: existing, error: lookupError } = await supabase
-        .from("wines")
-        .select("id,name")
-        .eq("merchant_id", merchantId)
-        .ilike("name", normalizedName)
-        .limit(1)
-        .maybeSingle();
-      if (lookupError && !isOptionalSchemaError(lookupError.code)) {
-        throw new Error(`Failed loading wines: ${lookupError.message}`);
-      }
-
-      if (existing?.id) {
-        const { error: updateError } = await supabase
-          .from("wines")
-          .update({
-            source_document_id: documentId,
-            name: normalizedName,
-            producer: wine.producer ?? null,
-            region: wine.region ?? null,
-            grape_varietal: wine.grapeVarietal ?? null,
-            tasting_notes: wine.tastingNotes ?? null,
-            approved_claims: wine.approvedClaims ?? null,
-            updated_at: now,
-          })
-          .eq("id", existing.id);
-        if (updateError && !isOptionalSchemaError(updateError.code)) {
-          throw new Error(`Failed updating wine ${normalizedName}: ${updateError.message}`);
-        }
-        wineIdsByName.set(normalizedName, existing.id);
-      } else {
-        const { data: inserted, error: insertError } = await supabase
-          .from("wines")
-          .insert({
-            merchant_id: merchantId,
-            source_document_id: documentId,
-            name: normalizedName,
-            producer: wine.producer ?? null,
-            region: wine.region ?? null,
-            grape_varietal: wine.grapeVarietal ?? null,
-            tasting_notes: wine.tastingNotes ?? null,
-            approved_claims: wine.approvedClaims ?? null,
-            updated_at: now,
-          })
-          .select("id,name")
-          .single();
-        if (insertError && !isOptionalSchemaError(insertError.code)) {
-          throw new Error(`Failed writing wines: ${insertError.message}`);
-        }
-        if (inserted?.id) {
-          wineIdsByName.set(normalizedName, inserted.id);
-        }
-      }
-    }
-  }
+  const wineIdsByName = await upsertWineRows({
+    merchantId,
+    sourceDocumentId: documentId,
+    rows: extracted.wines.map((wine) => ({
+      name: wine.name,
+      producer: wine.producer ?? null,
+      region: wine.region ?? null,
+      country: null,
+      grape_varietal: wine.grapeVarietal ?? null,
+      vintage: null,
+      style: null,
+      body: null,
+      acidity: null,
+      tasting_notes: wine.tastingNotes ?? null,
+      approved_claims: wine.approvedClaims ?? null,
+      price_band: null,
+      metadata: {},
+    })),
+  });
 
   const wineIds = [...wineIdsByName.values()];
   if (wineIds.length > 0) {
@@ -256,6 +215,79 @@ async function persistStructuredData(params: {
       [],
     ),
   });
+}
+
+export async function upsertWineRows(params: {
+  merchantId: string;
+  sourceDocumentId?: string | null;
+  rows: WineImportRow[];
+}) {
+  const { merchantId, rows, sourceDocumentId = null } = params;
+  const supabase = getSupabaseAdminClient();
+  const now = new Date().toISOString();
+  const wineIdsByName = new Map<string, string>();
+
+  for (const wine of rows) {
+    const normalizedName = wine.name.trim();
+    if (!normalizedName) continue;
+    const { data: existing, error: lookupError } = await supabase
+      .from("wines")
+      .select("id,name")
+      .eq("merchant_id", merchantId)
+      .ilike("name", normalizedName)
+      .limit(1)
+      .maybeSingle();
+    if (lookupError && !isOptionalSchemaError(lookupError.code)) {
+      throw new Error(`Failed loading wines: ${lookupError.message}`);
+    }
+
+    const payload = {
+      source_document_id: sourceDocumentId,
+      name: normalizedName,
+      producer: wine.producer ?? null,
+      region: wine.region ?? null,
+      country: wine.country ?? null,
+      grape_varietal: wine.grape_varietal ?? null,
+      vintage: wine.vintage ?? null,
+      style: wine.style ?? null,
+      body: wine.body ?? null,
+      acidity: wine.acidity ?? null,
+      tasting_notes: wine.tasting_notes ?? null,
+      approved_claims: wine.approved_claims ?? null,
+      price_band: wine.price_band ?? null,
+      metadata: wine.metadata ?? {},
+      updated_at: now,
+    };
+
+    if (existing?.id) {
+      const { error: updateError } = await supabase
+        .from("wines")
+        .update(payload)
+        .eq("id", existing.id);
+      if (updateError && !isOptionalSchemaError(updateError.code)) {
+        throw new Error(`Failed updating wine ${normalizedName}: ${updateError.message}`);
+      }
+      wineIdsByName.set(normalizedName, existing.id);
+      continue;
+    }
+
+    const { data: inserted, error: insertError } = await supabase
+      .from("wines")
+      .insert({
+        merchant_id: merchantId,
+        ...payload,
+      })
+      .select("id,name")
+      .single();
+    if (insertError && !isOptionalSchemaError(insertError.code)) {
+      throw new Error(`Failed writing wines: ${insertError.message}`);
+    }
+    if (inserted?.id) {
+      wineIdsByName.set(normalizedName, inserted.id);
+    }
+  }
+
+  return wineIdsByName;
 }
 
 export async function ingestUploadedFiles(input: IngestionInput) {

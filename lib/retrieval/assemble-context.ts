@@ -60,7 +60,7 @@ export async function assembleContextPackage(params: {
       .from("wines")
       .select("id,name,producer,region,tasting_notes,approved_claims")
       .eq("merchant_id", params.merchantId)
-      .limit(20),
+      .limit(500),
     supabase
       .from("wine_pairing_rules")
       .select("wine_id,pair_with,avoid_with,pairing_rationale")

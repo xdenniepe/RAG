@@ -48,3 +48,118 @@ export const generateMarketingRequestSchema = z.object({
     .max(2400, "Prompt/brief is too long."),
   requestedBy: actorIdSchema.optional(),
 });
+
+const hexColorSchema = z
+  .string()
+  .trim()
+  .regex(/^#([A-Fa-f0-9]{6})$/, "Use a valid hex color like #4A165C.");
+
+const optionalUrlSchema = z
+  .string()
+  .trim()
+  .optional()
+  .transform((value) => value ?? "")
+  .refine(
+    (value) => !value || /^https?:\/\/[^\s/$.?#].[^\s]*$/i.test(value),
+    "Website URL must start with http:// or https://.",
+  );
+
+export const onboardingAccountInfoSchema = z.object({
+  accountName: z
+    .string()
+    .trim()
+    .min(2, "Name is required.")
+    .max(120, "Name is too long."),
+});
+
+export const onboardingRestaurantDetailsSchema = z.object({
+  restaurantName: z
+    .string()
+    .trim()
+    .min(2, "Restaurant name is required.")
+    .max(160, "Restaurant name is too long."),
+  restaurantStreetAddress: z
+    .string()
+    .trim()
+    .min(4, "Street address is required.")
+    .max(180, "Street address is too long."),
+  restaurantAddressLine2: z
+    .string()
+    .trim()
+    .optional()
+    .transform((value) => value ?? "")
+    .refine((value) => value.length <= 180, "Address line 2 is too long."),
+  restaurantCity: z
+    .string()
+    .trim()
+    .min(2, "City is required.")
+    .max(120, "City is too long."),
+  restaurantState: z
+    .string()
+    .trim()
+    .optional()
+    .transform((value) => value ?? "")
+    .refine((value) => value.length <= 120, "State is too long."),
+  restaurantCountry: z
+    .string()
+    .trim()
+    .min(2, "Country is required.")
+    .max(120, "Country is too long."),
+  restaurantWebsite: optionalUrlSchema,
+  menuPdfFileName: z
+    .string()
+    .trim()
+    .optional()
+    .transform((value) => value ?? "")
+    .refine(
+      (value) => !value || value.toLowerCase().endsWith(".pdf"),
+      "Menu file must be a PDF.",
+    )
+    .refine((value) => value.length <= 260, "Menu file name is too long."),
+});
+
+export const onboardingBrandIdentitySchema = z.object({
+  brandPrimaryColor: hexColorSchema,
+  brandAccentColor: z
+    .string()
+    .trim()
+    .optional()
+    .transform((value) => value ?? "")
+    .refine(
+      (value) => !value || /^#([A-Fa-f0-9]{6})$/.test(value),
+      "Accent color must be a valid hex color like #C4A574.",
+    ),
+});
+
+export const onboardingRestaurantContextSchema = z.object({
+  restaurantVibe: z
+    .string()
+    .trim()
+    .min(2, "Restaurant vibe is required.")
+    .max(120, "Restaurant vibe is too long."),
+  cuisineType: z
+    .string()
+    .trim()
+    .min(2, "Cuisine and concept is required.")
+    .max(300, "Cuisine and concept is too long."),
+  targetClientele: z
+    .string()
+    .trim()
+    .min(2, "Target clientele is required.")
+    .max(300, "Target clientele is too long."),
+  toneOfVoice: z
+    .string()
+    .trim()
+    .min(2, "Tone of voice is required.")
+    .max(300, "Tone of voice is too long."),
+  beverageProgramGoals: z
+    .string()
+    .trim()
+    .min(2, "Beverage program goals are required.")
+    .max(500, "Beverage program goals are too long."),
+});
+
+export const onboardingSubmissionSchema = onboardingAccountInfoSchema
+  .merge(onboardingRestaurantDetailsSchema)
+  .merge(onboardingBrandIdentitySchema)
+  .merge(onboardingRestaurantContextSchema);

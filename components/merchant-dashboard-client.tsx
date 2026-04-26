@@ -1,10 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRef, useState, type SyntheticEvent } from "react";
 
 import { IngestionPanel } from "@/components/ingestion-panel";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -19,6 +17,10 @@ import {
   generateMarketingRequestSchema,
   merchantIngestionSchema,
 } from "@/lib/validation/forms";
+import {
+  marketingCopyResultSchema,
+  type MarketingCopyResult,
+} from "@/lib/schemas/generation";
 
 type GenerateResponse = {
   menuId: string;
@@ -55,12 +57,21 @@ const BRAND_TONE_OPTIONS = [
   "Minimal",
 ] as const;
 
+const BRAND_VISUAL_OPTIONS = [
+  "Clean editorial",
+  "Rustic heritage",
+  "Modern minimal",
+  "Bold contemporary",
+  "Classic luxury",
+  "Vibrant social",
+] as const;
+
 export function MerchantDashboardClient() {
-  const router = useRouter();
   const [merchantId, setMerchantId] = useState("demo-merchant");
   const [restaurantName, setRestaurantName] = useState("");
   const [cuisineStyle, setCuisineStyle] = useState("");
   const [brandTones, setBrandTones] = useState<string[]>([]);
+  const [brandVisuals, setBrandVisuals] = useState<string[]>([]);
   const [restaurantStory, setRestaurantStory] = useState("");
   const [menuItemName, setMenuItemName] = useState("");
   const [menuItemDescription, setMenuItemDescription] = useState("");
@@ -71,6 +82,24 @@ export function MerchantDashboardClient() {
   const [ingestionStatus, setIngestionStatus] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generateStatus, setGenerateStatus] = useState("");
+  const [generatedMenuId, setGeneratedMenuId] = useState<string | null>(null);
+  const [previewResult, setPreviewResult] = useState<MarketingCopyResult | null>(null);
+
+  const restaurantDetailsRef = useRef<HTMLDetailsElement>(null);
+  const generateReportRef = useRef<HTMLDetailsElement>(null);
+
+  function handleAccordionToggle(which: "restaurant" | "report") {
+    return (event: SyntheticEvent<HTMLDetailsElement>) => {
+      const opened = event.currentTarget.open;
+      if (!opened) return;
+      if (which === "restaurant" && generateReportRef.current) {
+        generateReportRef.current.open = false;
+      }
+      if (which === "report" && restaurantDetailsRef.current) {
+        restaurantDetailsRef.current.open = false;
+      }
+    };
+  }
 
   function toggleBrandTone(tone: string) {
     setBrandTones((current) =>
@@ -78,6 +107,21 @@ export function MerchantDashboardClient() {
         ? current.filter((item) => item !== tone)
         : [...current, tone],
     );
+  }
+
+  function toggleBrandVisual(visual: string) {
+    setBrandVisuals((current) =>
+      current.includes(visual)
+        ? current.filter((item) => item !== visual)
+        : [...current, visual],
+    );
+  }
+
+  function buildBrandDirection() {
+    const tonePart = brandTones.length > 0 ? `Tone: ${brandTones.join(", ")}` : "";
+    const visualPart =
+      brandVisuals.length > 0 ? `Visual: ${brandVisuals.join(", ")}` : "";
+    return [tonePart, visualPart].filter(Boolean).join(" | ");
   }
 
   function addMenuTag() {
@@ -182,12 +226,16 @@ export function MerchantDashboardClient() {
       setRestaurantName(payload.profile?.restaurant_name ?? "");
       setCuisineStyle(payload.profile?.cuisine_type ?? "");
       setRestaurantStory(payload.profile?.brand_story ?? "");
-      setBrandTones(
-        (payload.profile?.tone_of_voice ?? "")
+      const toneOfVoiceRaw = (payload.profile?.tone_of_voice ?? "").trim();
+      const [tonePart, visualPart] = toneOfVoiceRaw.split("|").map((part) => part.trim());
+      const parsePart = (part: string, prefix: string) =>
+        part
+          .replace(new RegExp(`^${prefix}:\\s*`, "i"), "")
           .split(",")
-          .map((tone) => tone.trim())
-          .filter(Boolean),
-      );
+          .map((value) => value.trim())
+          .filter(Boolean);
+      setBrandTones(parsePart(tonePart ?? "", "tone"));
+      setBrandVisuals(parsePart(visualPart ?? "", "visual"));
       setMenuTags(
         payload.menuItems.map((item) => ({
           name: item.name,
@@ -206,10 +254,11 @@ export function MerchantDashboardClient() {
   }
 
   async function handleGenerate() {
+    const brandDirection = buildBrandDirection();
     const brief = [
       "Create restaurant-specific wine menu copy with pairings.",
       "Use merchant and ops context only.",
-      brandTones.length > 0 ? `Preferred brand tone: ${brandTones.join(", ")}.` : "",
+      brandDirection ? `Universal brand direction: ${brandDirection}.` : "",
     ]
       .filter(Boolean)
       .join(" ");
@@ -229,6 +278,8 @@ export function MerchantDashboardClient() {
 
     setIsGenerating(true);
     setGenerateStatus("Generating menu...");
+    setPreviewResult(null);
+    setGeneratedMenuId(null);
     try {
       const response = await fetch("/api/generate", {
         method: "POST",
@@ -244,8 +295,14 @@ export function MerchantDashboardClient() {
       if (!payload.menuId) {
         throw new Error("Missing generated menu id.");
       }
-      const normalizedMerchant = merchantId.trim();
-      router.push(`/${normalizedMerchant}/wine-menu/${payload.menuId}`);
+      const parsedPreview = marketingCopyResultSchema.safeParse(payload);
+      if (!parsedPreview.success) {
+        throw new Error("Generated result could not be rendered for preview.");
+      }
+
+      setGeneratedMenuId(payload.menuId);
+      setPreviewResult(parsedPreview.data);
+      setGenerateStatus("Preview ready.");
     } catch (error) {
       setGenerateStatus(
         error instanceof Error ? error.message : "Unexpected generation error.",
@@ -256,62 +313,78 @@ export function MerchantDashboardClient() {
   }
 
   return (
-    <section className="grid gap-6 lg:grid-cols-2">
-      <IngestionPanel
-        sourceType="restaurant"
-        title="Merchant restaurant ingestion"
-        description="Add restaurant profile, menu style, and available wines."
-        merchantIdLabel="Restaurant merchant ID"
-        merchantPlaceholder="restaurant-123"
-        defaultMerchantId={merchantId}
-        onMerchantIdChange={setMerchantId}
-        onUploadSuccess={() => {
-          setIngestionStatus("Merchant data indexed successfully.");
-        }}
-        validateFormData={(formData) => {
-          const result = merchantIngestionSchema.safeParse({
-            restaurantName: String(formData.get("restaurantName") ?? ""),
-            restaurantStory: String(formData.get("restaurantStory") ?? ""),
-            cuisineStyle: String(formData.get("cuisineStyle") ?? ""),
-            menuHighlights: String(formData.get("menuHighlights") ?? ""),
-            availableWines: String(formData.get("availableWines") ?? ""),
-            brandTone: String(formData.get("brandTone") ?? ""),
-          });
-          return result.success
-            ? []
-            : result.error.issues.map((issue) => issue.message);
-        }}
-        buildTextPayload={(formData) => {
-          const restaurantName = String(formData.get("restaurantName") ?? "").trim();
-          const story = String(formData.get("restaurantStory") ?? "").trim();
-          const cuisineStyle = String(formData.get("cuisineStyle") ?? "").trim();
-          const menuHighlights = menuTags.map((item) => item.name).join(", ");
-          const availableWines = availableWineTags.join(", ");
-          const brandTone = brandTones.join(", ");
-          const menuLines = menuTags
-            .map((item) =>
-              `Menu Item: ${item.name}${item.description ? ` - ${item.description}` : ""}`,
-            )
-            .join("\n");
+    <section className="flex flex-col gap-3">
+      <details
+        ref={restaurantDetailsRef}
+        className="group/details overflow-hidden rounded-lg border border-[var(--input-border)] bg-[var(--surface-elevated)]"
+        open
+        onToggle={handleAccordionToggle("restaurant")}
+      >
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-left text-sm font-semibold [&::-webkit-details-marker]:hidden">
+          <span>1. Update restaurant details</span>
+          <span
+            aria-hidden
+            className="text-xs text-[var(--muted-foreground)] transition-transform group-open/details:rotate-180"
+          >
+            ▼
+          </span>
+        </summary>
+        <div className="border-t border-[var(--input-border)] px-2 pb-3 pt-1 sm:px-3">
+          <IngestionPanel
+            sourceType="restaurant"
+            title="Merchant restaurant ingestion"
+            description="Add restaurant profile, menu style, and available wines."
+            merchantIdLabel="Restaurant merchant ID"
+            merchantPlaceholder="restaurant-123"
+            defaultMerchantId={merchantId}
+            onMerchantIdChange={setMerchantId}
+            onUploadSuccess={() => {
+              setIngestionStatus("Merchant data indexed successfully.");
+            }}
+            validateFormData={(formData) => {
+              const result = merchantIngestionSchema.safeParse({
+                restaurantName: String(formData.get("restaurantName") ?? ""),
+                restaurantStory: String(formData.get("restaurantStory") ?? ""),
+                cuisineStyle: String(formData.get("cuisineStyle") ?? ""),
+                menuHighlights: String(formData.get("menuHighlights") ?? ""),
+                availableWines: String(formData.get("availableWines") ?? ""),
+                brandTone: String(formData.get("brandTone") ?? ""),
+              });
+              return result.success
+                ? []
+                : result.error.issues.map((issue) => issue.message);
+            }}
+            buildTextPayload={(formData) => {
+              const restaurantName = String(formData.get("restaurantName") ?? "").trim();
+              const story = String(formData.get("restaurantStory") ?? "").trim();
+              const cuisineStyle = String(formData.get("cuisineStyle") ?? "").trim();
+              const menuHighlights = menuTags.map((item) => item.name).join(", ");
+              const availableWines = availableWineTags.join(", ");
+              const brandDirection = buildBrandDirection();
+              const menuLines = menuTags
+                .map((item) =>
+                  `Menu Item: ${item.name}${item.description ? ` - ${item.description}` : ""}`,
+                )
+                .join("\n");
 
-          const content = [
-            `Restaurant Name: ${restaurantName}`,
-            `Restaurant Story: ${story}`,
-            `Cuisine Style: ${cuisineStyle}`,
-            `Menu Highlights: ${menuHighlights}`,
-            `Available Wines: ${availableWines}`,
-            `Brand Tone: ${brandTone}`,
-            menuLines,
-          ]
-            .filter((line) => !line.endsWith(": "))
-            .join("\n");
+              const content = [
+                `Restaurant Name: ${restaurantName}`,
+                `Restaurant Story: ${story}`,
+                `Cuisine Style: ${cuisineStyle}`,
+                `Menu Highlights: ${menuHighlights}`,
+                `Available Wines: ${availableWines}`,
+                `Brand Direction: ${brandDirection}`,
+                menuLines,
+              ]
+                .filter((line) => !line.endsWith(": "))
+                .join("\n");
 
-          return {
-            title: restaurantName || "merchant-restaurant-entry",
-            content,
-          };
-        }}
-        formFields={
+              return {
+                title: restaurantName || "merchant-restaurant-entry",
+                content,
+              };
+            }}
+            formFields={
           <>
             <div className="space-y-2">
               <Label>Merchant profile values</Label>
@@ -430,68 +503,224 @@ export function MerchantDashboardClient() {
                 </p>
               )}
             </div>
-            <div className="space-y-2">
-              <Label>Brand tone</Label>
-              <div className="rounded-md border border-[var(--input-border)] p-2">
-                <div className="mb-2 flex flex-wrap gap-2">
-                  {brandTones.length > 0 ? (
-                    brandTones.map((tone) => <Badge key={tone}>{tone}</Badge>)
-                  ) : (
+            <div className="space-y-3">
+              <div>
+                <Label>Brand direction</Label>
+                <p className="mt-1 text-xs text-[var(--muted-foreground)]">
+                  Choose voice (how it reads) and visual (how it should feel on the page)
+                  for AI wine menu generation.
+                </p>
+              </div>
+              <Input
+                type="hidden"
+                name="brandTone"
+                value={buildBrandDirection()}
+                readOnly
+              />
+
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-2 rounded-lg border border-[var(--input-border)] p-3">
+                  <div>
+                    <p className="text-sm font-medium">Voice &amp; tone</p>
                     <p className="text-xs text-[var(--muted-foreground)]">
-                      Select one or more tone tags.
+                      Personality of the copy.
+                    </p>
+                  </div>
+                  <div className="flex min-h-10 flex-wrap gap-2 rounded-md border border-dashed border-[var(--input-border)] bg-[var(--background)] p-2">
+                    {brandTones.length > 0 ? (
+                      brandTones.map((tone) => (
+                        <button
+                          key={tone}
+                          type="button"
+                          onClick={() => toggleBrandTone(tone)}
+                          className="inline-flex items-center gap-1 rounded-full border border-[var(--input-border)] px-2.5 py-1 text-xs text-[var(--muted-foreground)]"
+                          title="Remove tone"
+                        >
+                          <span>{tone}</span>
+                          <span aria-hidden>×</span>
+                        </button>
+                      ))
+                    ) : (
+                      <span className="self-center text-xs text-[var(--muted-foreground)]">
+                        No tones yet — pick below.
+                      </span>
+                    )}
+                  </div>
+                  <label className="sr-only" htmlFor="merchant-brand-tone-select">
+                    Add tone
+                  </label>
+                  <select
+                    id="merchant-brand-tone-select"
+                    value=""
+                    onChange={(event) => {
+                      if (!event.target.value) return;
+                      toggleBrandTone(event.target.value);
+                      event.currentTarget.value = "";
+                    }}
+                    className="h-9 w-full rounded-md border border-[var(--input-border)] bg-transparent px-2 text-sm"
+                  >
+                    <option value="">Add tone…</option>
+                    {BRAND_TONE_OPTIONS.filter(
+                      (option) => !brandTones.includes(option),
+                    ).map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex flex-col gap-2 rounded-lg border border-[var(--input-border)] p-3">
+                  <div>
+                    <p className="text-sm font-medium">Visual style</p>
+                    <p className="text-xs text-[var(--muted-foreground)]">
+                      Look and layout energy for the menu.
+                    </p>
+                  </div>
+                  <div className="flex min-h-10 flex-wrap gap-2 rounded-md border border-dashed border-[var(--input-border)] bg-[var(--background)] p-2">
+                    {brandVisuals.length > 0 ? (
+                      brandVisuals.map((visual) => (
+                        <button
+                          key={visual}
+                          type="button"
+                          onClick={() => toggleBrandVisual(visual)}
+                          className="inline-flex items-center gap-1 rounded-full border border-[var(--input-border)] px-2.5 py-1 text-xs text-[var(--muted-foreground)]"
+                          title="Remove visual"
+                        >
+                          <span>{visual}</span>
+                          <span aria-hidden>×</span>
+                        </button>
+                      ))
+                    ) : (
+                      <span className="self-center text-xs text-[var(--muted-foreground)]">
+                        No visuals yet — pick below.
+                      </span>
+                    )}
+                  </div>
+                  <label className="sr-only" htmlFor="merchant-brand-visual-select">
+                    Add visual style
+                  </label>
+                  <select
+                    id="merchant-brand-visual-select"
+                    value=""
+                    onChange={(event) => {
+                      if (!event.target.value) return;
+                      toggleBrandVisual(event.target.value);
+                      event.currentTarget.value = "";
+                    }}
+                    className="h-9 w-full rounded-md border border-[var(--input-border)] bg-transparent px-2 text-sm"
+                  >
+                    <option value="">Add visual style…</option>
+                    {BRAND_VISUAL_OPTIONS.filter(
+                      (option) => !brandVisuals.includes(option),
+                    ).map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {buildBrandDirection() ? (
+                <div className="rounded-md border border-[var(--input-border)] bg-[var(--surface-elevated)] px-3 py-2">
+                  <p className="text-xs font-medium text-[var(--foreground)]">
+                    Sent to AI
+                  </p>
+                  <p className="mt-1 text-xs leading-relaxed text-[var(--muted-foreground)]">
+                    {buildBrandDirection()}
+                  </p>
+                </div>
+              ) : null}
+            </div>
+          </>
+            }
+          />
+        </div>
+      </details>
+
+      <details
+        ref={generateReportRef}
+        className="group/report overflow-hidden rounded-lg border border-[var(--input-border)] bg-[var(--surface-elevated)]"
+        onToggle={handleAccordionToggle("report")}
+      >
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-left text-sm font-semibold [&::-webkit-details-marker]:hidden">
+          <span>2. Generate report</span>
+          <span
+            aria-hidden
+            className="text-xs text-[var(--muted-foreground)] transition-transform group-open/report:rotate-180"
+          >
+            ▼
+          </span>
+        </summary>
+        <div className="border-t border-[var(--input-border)] p-4">
+          <Card className="border-0 bg-transparent shadow-none">
+            <CardHeader className="px-0 pt-0">
+              <CardTitle className="text-base">Wine menu generation</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 px-0 pb-0">
+              <div className="space-y-2">
+                <Label>Merchant ID</Label>
+                <Input
+                  value={merchantId}
+                  onChange={(event) => setMerchantId(event.target.value)}
+                  placeholder="restaurant-123"
+                  required
+                />
+              </div>
+              <Button
+                onClick={handleGenerate}
+                disabled={isGenerating}
+                variant="success"
+              >
+                {isGenerating ? "Generating..." : "Generate wine menu"}
+              </Button>
+              {generateStatus ? (
+                <p className="text-sm text-[var(--muted-foreground)]">{generateStatus}</p>
+              ) : null}
+              {previewResult ? (
+                <div className="space-y-3 rounded-md border border-[var(--input-border)] bg-[var(--surface)] p-3">
+                  <div className="space-y-1">
+                    <p className="text-xs text-[var(--muted-foreground)]">
+                      Preview menu ID: {generatedMenuId}
+                    </p>
+                    <p className="text-lg font-semibold">
+                      {previewResult.renderPage?.hero.headline ??
+                        previewResult.pageDesign.heroHeadline}
+                    </p>
+                    <p className="text-sm text-[var(--muted-foreground)]">
+                      {previewResult.renderPage?.hero.subheadline ??
+                        previewResult.pageDesign.heroSubheadline}
+                    </p>
+                    <p className="text-sm text-[var(--muted-foreground)]">
+                      {previewResult.renderPage?.intro ?? previewResult.restaurantSummary}
+                    </p>
+                  </div>
+                  {previewResult.wines.length > 0 ? (
+                    <div className="grid gap-2">
+                      {previewResult.wines.slice(0, 6).map((wine) => (
+                        <div
+                          key={wine.wineName}
+                          className="rounded-md border border-[var(--input-border)] bg-[var(--surface-elevated)] p-2"
+                        >
+                          <p className="text-sm font-medium">{wine.wineName}</p>
+                          <p className="text-xs text-[var(--muted-foreground)]">
+                            {wine.menuCopy}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-[var(--muted-foreground)]">
+                      No wines in the generated result yet.
                     </p>
                   )}
                 </div>
-                <select
-                  value=""
-                  onChange={(event) => {
-                    if (!event.target.value) return;
-                    toggleBrandTone(event.target.value);
-                    event.currentTarget.value = "";
-                  }}
-                  className="h-9 w-full rounded-md border border-[var(--input-border)] bg-transparent px-2 text-sm"
-                >
-                  <option value="">Add brand tone tag...</option>
-                  {BRAND_TONE_OPTIONS.filter(
-                    (option) => !brandTones.includes(option),
-                  ).map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </>
-        }
-      />
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Generate marketing copy</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label>Merchant ID</Label>
-            <Input
-              value={merchantId}
-              onChange={(event) => setMerchantId(event.target.value)}
-              placeholder="restaurant-123"
-              required
-            />
-          </div>
-          <Button
-            onClick={handleGenerate}
-            disabled={isGenerating}
-            variant="success"
-          >
-            {isGenerating ? "Generating..." : "Generate wine menu"}
-          </Button>
-          {generateStatus ? (
-            <p className="text-sm text-[var(--muted-foreground)]">{generateStatus}</p>
-          ) : null}
-        </CardContent>
-      </Card>
+              ) : null}
+            </CardContent>
+          </Card>
+        </div>
+      </details>
     </section>
   );
 }

@@ -86,6 +86,40 @@ export async function extractTextFromImageWithOpenAI(file: File) {
   return response.output_text.trim();
 }
 
+export async function extractTextFromPdfWithOpenAI(file: File) {
+  const client = getOpenAIClient();
+  const bytes = await file.arrayBuffer();
+  const base64 = Buffer.from(bytes).toString("base64");
+
+  const response = await withOpenAIRetry(() =>
+    client.responses.create({
+      model: DEFAULT_CHAT_MODEL,
+      input: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "input_text",
+              text: [
+                "You are running OCR on a wine product PDF.",
+                "Convert each page to text and return only extracted text.",
+                "Keep field labels when visible.",
+              ].join(" "),
+            },
+            {
+              type: "input_file",
+              filename: file.name || "upload.pdf",
+              file_data: `data:application/pdf;base64,${base64}`,
+            },
+          ],
+        },
+      ],
+    }),
+  );
+
+  return response.output_text.trim();
+}
+
 /*
 Anthropic fallback scaffold (not active yet):
 

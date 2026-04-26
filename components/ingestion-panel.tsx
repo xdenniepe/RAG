@@ -41,6 +41,7 @@ export function IngestionPanel(props: IngestionPanelProps) {
 
   useEffect(() => {
     if (props.defaultMerchantId && props.defaultMerchantId !== merchantId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setMerchantId(props.defaultMerchantId);
     }
   }, [props.defaultMerchantId, merchantId]);
