@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
+import { ui } from "@clerk/ui";
 import { auth, clerkClient, currentUser } from "@clerk/nextjs/server";
 import { Geist, Geist_Mono } from "next/font/google";
+import { AuthSessionSync } from "@/components/auth-session-sync";
 import { TopbarAuthControls } from "@/components/topbar-auth-controls";
 import "./globals.css";
 
@@ -49,30 +51,39 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const { userId } = await auth();
+  let sessionRole = "";
   if (userId) {
-    const user = await currentUser();
-    const desiredRole = resolveRoleFromEmail(user?.primaryEmailAddress?.emailAddress);
-    const existingRole =
-      typeof user?.publicMetadata?.role === "string" ? user.publicMetadata.role : "";
+    try {
+      const user = await currentUser();
+      sessionRole =
+        typeof user?.privateMetadata?.role === "string" ? user.privateMetadata.role : "";
+      const desiredRole = resolveRoleFromEmail(user?.primaryEmailAddress?.emailAddress);
+      const existingRole =
+        typeof user?.privateMetadata?.role === "string" ? user.privateMetadata.role : "";
 
-    if (existingRole !== desiredRole) {
-      const client = await clerkClient();
-      await client.users.updateUserMetadata(userId, {
-        publicMetadata: {
-          ...(user?.publicMetadata ?? {}),
-          role: desiredRole,
-        },
-      });
+      if (existingRole !== desiredRole) {
+        const client = await clerkClient();
+        await client.users.updateUserMetadata(userId, {
+          privateMetadata: {
+            ...(user?.privateMetadata ?? {}),
+            role: desiredRole,
+          },
+        });
+        sessionRole = desiredRole;
+      }
+    } catch (error) {
+      console.error("Failed to sync Clerk role metadata in layout", error);
     }
   }
 
   return (
-    <ClerkProvider>
+    <ClerkProvider ui={ui}>
       <html
         lang="en"
         className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       >
         <body className="min-h-screen flex flex-col">
+          <AuthSessionSync role={sessionRole} />
           <header className="flex items-center justify-end px-6 py-4">
             <TopbarAuthControls />
           </header>

@@ -14,7 +14,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  onboardingAccountInfoSchema,
   onboardingBrandIdentitySchema,
   onboardingRestaurantContextSchema,
   onboardingRestaurantDetailsSchema,
@@ -35,7 +34,6 @@ function getSafeHexColor(value: string, fallbackHex: string) {
 }
 
 type OnboardingState = {
-  accountName: string;
   restaurantName: string;
   streetAddress: string;
   addressLine2: string;
@@ -55,7 +53,6 @@ type OnboardingState = {
 };
 
 type OnboardingApiProfile = {
-  accountName: string;
   restaurantName: string;
   restaurantStreetAddress: string;
   restaurantAddressLine2: string;
@@ -92,7 +89,6 @@ type OnboardingStep = {
 };
 
 const INITIAL_STATE: OnboardingState = {
-  accountName: "",
   restaurantName: "",
   streetAddress: "",
   addressLine2: "",
@@ -112,10 +108,6 @@ const INITIAL_STATE: OnboardingState = {
 };
 
 const ONBOARDING_STEPS: OnboardingStep[] = [
-  {
-    title: "Welcome to Tastefari",
-    description: "Let's set up your restaurant profile",
-  },
   {
     title: "Restaurant Details",
     description: "Tell us about your establishment",
@@ -211,7 +203,6 @@ export function RestaurantOnboardingClient() {
 
   function toSubmissionData(currentForm: OnboardingState) {
     return {
-      accountName: currentForm.accountName,
       restaurantName: currentForm.restaurantName,
       restaurantStreetAddress: currentForm.streetAddress,
       restaurantAddressLine2: currentForm.addressLine2,
@@ -240,7 +231,6 @@ export function RestaurantOnboardingClient() {
         : [];
     return {
       ...INITIAL_STATE,
-      accountName: profile?.accountName ?? "",
       restaurantName: profile?.restaurantName ?? "",
       streetAddress: profile?.restaurantStreetAddress ?? "",
       addressLine2: profile?.restaurantAddressLine2 ?? "",
@@ -415,7 +405,7 @@ export function RestaurantOnboardingClient() {
   );
 
   useEffect(() => {
-    if (isLoading || step !== 1) {
+    if (isLoading || step !== 0) {
       return;
     }
     const frame = window.requestAnimationFrame(() => {
@@ -446,14 +436,9 @@ export function RestaurantOnboardingClient() {
 
   function validateCurrentStep() {
     if (step === 0) {
-      return onboardingAccountInfoSchema.safeParse({
-        accountName: form.accountName,
-      });
-    }
-    if (step === 1) {
       return onboardingRestaurantDetailsSchema.safeParse(toSubmissionData(form));
     }
-    if (step === 2) {
+    if (step === 1) {
       return onboardingBrandIdentitySchema.safeParse({
         brandPrimaryColor: form.brandPrimaryColor,
         brandAccentColor: form.brandAccentColor,
@@ -533,7 +518,7 @@ export function RestaurantOnboardingClient() {
   if (isLoading) {
     return (
       <main className="mx-auto flex w-full max-w-3xl flex-1 items-center justify-center px-6 py-10">
-        <p className="text-sm text-[var(--muted-foreground)]">{status}</p>
+        <p className="text-sm text-white/90">{status}</p>
       </main>
     );
   }
@@ -549,12 +534,11 @@ export function RestaurantOnboardingClient() {
               width={44}
               height={44}
               className="size-20 object-contain"
-              priority
             />
             <span className="text-4xl font-bold tracking-tight text-white">Tastefari</span>
           </h1>
           <p className="pt-1 text-base font-medium text-[var(--onboarding-hero-subtitle)]">
-            Create premium product experiences for your guests
+            Let's set up your restaurant profile
           </p>
         </header>
 
@@ -570,18 +554,6 @@ export function RestaurantOnboardingClient() {
           </div>
 
           {step === 0 ? (
-            <section className="space-y-6">
-              <Label htmlFor="account-name">Your Name</Label>
-              <Input
-                id="account-name"
-                value={form.accountName}
-                onChange={(event) => setField("accountName", event.target.value)}
-                placeholder="John Smith"
-              />
-            </section>
-          ) : null}
-
-          {step === 1 ? (
             <section className="space-y-6">
               <div className="flex flex-col gap-2">
                 <Label htmlFor="restaurant-name">Restaurant Name</Label>
@@ -698,7 +670,7 @@ export function RestaurantOnboardingClient() {
             </section>
           ) : null}
 
-          {step === 2 ? (
+          {step === 1 ? (
             <section className="space-y-6">
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="relative flex flex-col gap-2" ref={primaryPickerRef}>
@@ -794,7 +766,7 @@ export function RestaurantOnboardingClient() {
             </section>
           ) : null}
 
-          {step === 3 ? (
+          {step === 2 ? (
             <section className="space-y-6">
               <div className="flex flex-col gap-2">
                 <Label>Restaurant Vibe</Label>

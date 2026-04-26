@@ -47,7 +47,7 @@ export async function assembleContextPackage(params: {
     supabase
       .from("restaurant_profiles")
       .select(
-        "restaurant_name,cuisine_type,tone_of_voice,brand_story,target_audience,price_positioning",
+        "restaurant_name,cuisine_type,tone_of_voice,target_clientele,metadata",
       )
       .eq("merchant_id", params.merchantId)
       .maybeSingle(),
@@ -104,9 +104,25 @@ export async function assembleContextPackage(params: {
             restaurantName: profileRes.data.restaurant_name,
             cuisineType: profileRes.data.cuisine_type,
             toneOfVoice: profileRes.data.tone_of_voice,
-            brandStory: profileRes.data.brand_story,
-            targetAudience: profileRes.data.target_audience,
-            pricePositioning: profileRes.data.price_positioning,
+            brandStory:
+              profileRes.data.metadata &&
+              typeof profileRes.data.metadata === "object" &&
+              typeof profileRes.data.metadata.brandStory === "string"
+                ? profileRes.data.metadata.brandStory
+                : null,
+            targetAudience:
+              profileRes.data.target_clientele ??
+              (profileRes.data.metadata &&
+              typeof profileRes.data.metadata === "object" &&
+              typeof profileRes.data.metadata.targetAudience === "string"
+                ? profileRes.data.metadata.targetAudience
+                : null),
+            pricePositioning:
+              profileRes.data.metadata &&
+              typeof profileRes.data.metadata === "object" &&
+              typeof profileRes.data.metadata.pricePositioning === "string"
+                ? profileRes.data.metadata.pricePositioning
+                : null,
           }
         : null,
       menuItems: (menuRes.data ?? []) as Array<{

@@ -7,7 +7,13 @@ import { getOnboardingStatus } from "@/lib/onboarding/server";
 export default async function OnboardingPage() {
   const { userId } = await auth();
   if (!userId) {
-    redirect("/auth/sign-in");
+    redirect("/auth/sign-up");
+  }
+
+  const user = await currentUser();
+  const isAdmin = user?.privateMetadata?.role === "admin";
+  if (isAdmin) {
+    redirect("/dashboard");
   }
 
   const onboarding = await getOnboardingStatus(userId);
@@ -15,7 +21,6 @@ export default async function OnboardingPage() {
     redirect("/dashboard");
   }
 
-  const user = await currentUser();
   const isEmailVerified = user?.primaryEmailAddress?.verification?.status === "verified";
 
   if (!isEmailVerified) {

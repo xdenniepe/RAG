@@ -36,8 +36,9 @@ type MerchantValuesResponse = {
   profile: {
     restaurant_name: string | null;
     cuisine_type: string | null;
-    brand_story: string | null;
+    target_clientele: string | null;
     tone_of_voice: string | null;
+    metadata: Record<string, unknown> | null;
   } | null;
   menuItems: Array<{
     name: string;
@@ -225,7 +226,15 @@ export function MerchantDashboardClient() {
 
       setRestaurantName(payload.profile?.restaurant_name ?? "");
       setCuisineStyle(payload.profile?.cuisine_type ?? "");
-      setRestaurantStory(payload.profile?.brand_story ?? "");
+      const profileMetadata =
+        payload.profile?.metadata && typeof payload.profile.metadata === "object"
+          ? payload.profile.metadata
+          : null;
+      const metadataBrandStory =
+        profileMetadata && typeof profileMetadata.brandStory === "string"
+          ? profileMetadata.brandStory
+          : "";
+      setRestaurantStory(metadataBrandStory);
       const toneOfVoiceRaw = (payload.profile?.tone_of_voice ?? "").trim();
       const [tonePart, visualPart] = toneOfVoiceRaw.split("|").map((part) => part.trim());
       const parsePart = (part: string, prefix: string) =>

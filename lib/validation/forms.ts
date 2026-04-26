@@ -64,14 +64,6 @@ const optionalUrlSchema = z
     "Website URL must start with http:// or https://.",
   );
 
-export const onboardingAccountInfoSchema = z.object({
-  accountName: z
-    .string()
-    .trim()
-    .min(2, "Name is required.")
-    .max(120, "Name is too long."),
-});
-
 export const onboardingRestaurantDetailsSchema = z.object({
   restaurantName: z
     .string()
@@ -159,7 +151,6 @@ export const onboardingRestaurantContextSchema = z.object({
     .max(500, "Beverage program goals are too long."),
 });
 
-export const onboardingSubmissionSchema = onboardingAccountInfoSchema
-  .merge(onboardingRestaurantDetailsSchema)
+export const onboardingSubmissionSchema = onboardingRestaurantDetailsSchema
   .merge(onboardingBrandIdentitySchema)
   .merge(onboardingRestaurantContextSchema);

@@ -16,10 +16,6 @@ export function TopbarAuthControls() {
   }
 
   return (
-    <SignInButton
-      mode="modal"
-      forceRedirectUrl="/dashboard"
-      fallbackRedirectUrl="/dashboard"
-    />
+    <></>
   );
 }

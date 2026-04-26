@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { auth } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 
+import { DashboardSessionRoleHeader } from "@/components/dashboard-session-role-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getOnboardingStatus } from "@/lib/onboarding/server";
@@ -12,21 +13,18 @@ export default async function DashboardPage() {
     redirect("/auth/sign-in");
   }
 
-  const onboarding = await getOnboardingStatus(userId);
-  if (!onboarding.isCompleted) {
-    redirect("/onboarding");
+  const user = await currentUser();
+  const isAdmin = user?.privateMetadata?.role === "admin";
+  if (!isAdmin) {
+    const onboarding = await getOnboardingStatus(userId);
+    if (!onboarding.isCompleted) {
+      redirect("/onboarding");
+    }
   }
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-8 px-6 py-10">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight">
-          Choose your dashboard
-        </h1>
-        <p className="text-sm text-[var(--muted-foreground)]">
-          Separate flows for Ops and Restaurant merchants.
-        </p>
-      </div>
+      <DashboardSessionRoleHeader />
       <section className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>

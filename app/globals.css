@@ -70,7 +70,6 @@ form {
 }
 
 a {
-  color: var(--link);
   text-decoration-thickness: 1.5px;
   text-underline-offset: 2px;
 }
@@ -121,5 +120,50 @@ textarea:focus-visible,
 a:focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
+}
+
+.signup-card-cleanup .cl-header {
+  display: none !important;
+}
+
+.signup-card-cleanup .cl-rootBox,
+.signup-card-cleanup .cl-cardBox,
+.signup-card-cleanup .cl-card {
+  width: 100% !important;
+  max-width: 42rem !important;
+}
+
+.signup-card-cleanup .cl-card {
+  padding-top: 1.5rem !important;
+}
+
+.signup-card-cleanup .cl-formButtonPrimary {
+  display: inline-flex !important;
+  height: 2.5rem !important;
+  width: 100% !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 0.75rem !important;
+  background: var(--link) !important;
+  color: #fff !important;
+  box-shadow: none !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  transition: opacity 0.2s ease !important;
+}
+
+.signup-card-cleanup .cl-formButtonPrimary:hover {
+  opacity: 0.9 !important;
+}
+
+.signup-card-cleanup .cl-formFieldLabel {
+  color: var(--foreground) !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  line-height: 1 !important;
+}
+
+.signup-card-cleanup .cl-formFieldLabelRow {
+  margin-bottom: 0.5rem !important;
 }
 

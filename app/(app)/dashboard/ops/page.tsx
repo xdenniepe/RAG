@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { auth } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 
 import { OpsDashboardClient } from "@/components/ops-dashboard-client";
@@ -12,9 +12,13 @@ export default async function OpsDashboardPage() {
     redirect("/auth/sign-in");
   }
 
-  const onboarding = await getOnboardingStatus(userId);
-  if (!onboarding.isCompleted) {
-    redirect("/onboarding");
+  const user = await currentUser();
+  const isAdmin = user?.privateMetadata?.role === "admin";
+  if (!isAdmin) {
+    const onboarding = await getOnboardingStatus(userId);
+    if (!onboarding.isCompleted) {
+      redirect("/onboarding");
+    }
   }
 
   return (

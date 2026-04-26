@@ -136,15 +136,30 @@ async function persistStructuredData(params: {
 
   if (extracted.restaurantProfile) {
     const supabase = getSupabaseAdminClient();
+    const { data: existingProfile, error: existingProfileError } = await supabase
+      .from("restaurant_profiles")
+      .select("metadata")
+      .eq("merchant_id", merchantId)
+      .maybeSingle();
+    if (existingProfileError && !isOptionalSchemaError(existingProfileError.code)) {
+      throw new Error(`Failed loading restaurant_profiles metadata: ${existingProfileError.message}`);
+    }
+
+    const mergedMetadata = {
+      ...((existingProfile?.metadata as Record<string, unknown> | null) ?? {}),
+      brandStory: extracted.restaurantProfile.brandStory ?? null,
+      targetAudience: extracted.restaurantProfile.targetAudience ?? null,
+      pricePositioning: extracted.restaurantProfile.pricePositioning ?? null,
+    };
+
     const { error } = await supabase.from("restaurant_profiles").upsert(
       {
         merchant_id: merchantId,
         restaurant_name: extracted.restaurantProfile.restaurantName,
         cuisine_type: extracted.restaurantProfile.cuisineType ?? null,
         tone_of_voice: extracted.restaurantProfile.toneOfVoice ?? null,
-        brand_story: extracted.restaurantProfile.brandStory ?? null,
-        target_audience: extracted.restaurantProfile.targetAudience ?? null,
-        price_positioning: extracted.restaurantProfile.pricePositioning ?? null,
+        target_clientele: extracted.restaurantProfile.targetAudience ?? null,
+        metadata: mergedMetadata,
         updated_at: now,
       },
       { onConflict: "merchant_id" },

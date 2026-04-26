@@ -16,7 +16,7 @@ export async function GET(request: Request) {
     const [profileResult, menuResult, winesResult] = await Promise.all([
       supabase
         .from("restaurant_profiles")
-        .select("restaurant_name,cuisine_type,brand_story,tone_of_voice")
+        .select("restaurant_name,cuisine_type,target_clientele,tone_of_voice,metadata")
         .eq("merchant_id", merchantId)
         .maybeSingle(),
       supabase
