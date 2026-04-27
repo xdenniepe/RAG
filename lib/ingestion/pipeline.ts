@@ -5,8 +5,12 @@ import { CHUNKING_VERSION, chunkParsedFile } from "@/lib/ingestion/chunker";
 import { extractStructuredData } from "@/lib/ingestion/extract-structured-data";
 import { parseFileToText } from "@/lib/ingestion/extract-text";
 import { NORMALIZATION_VERSION, normalizeExtractionBlocks } from "@/lib/ingestion/normalize";
-import { IngestionInput, SOURCE_TYPES, StructuredExtractionResult } from "@/lib/ingestion/types";
-import { WineImportRow } from "@/lib/ops-import/schema";
+import {
+  IngestionInput,
+  SOURCE_TYPES,
+  StructuredExtractionResult,
+  type WineUpsertRow,
+} from "@/lib/ingestion/types";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import { insertDocumentChunk } from "@/lib/supabase/vector";
 
@@ -235,7 +239,7 @@ async function persistStructuredData(params: {
 export async function upsertWineRows(params: {
   merchantId: string;
   sourceDocumentId?: string | null;
-  rows: WineImportRow[];
+  rows: WineUpsertRow[];
 }) {
   const { merchantId, rows, sourceDocumentId = null } = params;
   const supabase = getSupabaseAdminClient();

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { auth } from "@clerk/nextjs/server";
 
+import { safeCurrentUser } from "@/lib/clerk-user";
 import { onboardingSubmissionSchema } from "@/lib/validation/forms";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 
@@ -68,15 +69,15 @@ function unauthorizedResponse() {
   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 }
 
-function isUserAdmin(user: Awaited<ReturnType<typeof currentUser>>) {
+function isUserAdmin(user: Awaited<ReturnType<typeof safeCurrentUser>>) {
   return user?.privateMetadata?.role === "admin";
 }
 
-function isUserEmailVerified(user: Awaited<ReturnType<typeof currentUser>>) {
+function isUserEmailVerified(user: Awaited<ReturnType<typeof safeCurrentUser>>) {
   return user?.primaryEmailAddress?.verification?.status === "verified";
 }
 
-function ensureVerifiedEmail(user: Awaited<ReturnType<typeof currentUser>>) {
+function ensureVerifiedEmail(user: Awaited<ReturnType<typeof safeCurrentUser>>) {
   const isEmailVerified = isUserEmailVerified(user);
   if (!isEmailVerified) {
     return NextResponse.json(
@@ -202,7 +203,10 @@ export async function GET() {
   if (!userId) {
     return unauthorizedResponse();
   }
-  const user = await currentUser();
+  const user = await safeCurrentUser();
+  if (!user) {
+    return unauthorizedResponse();
+  }
   const isAdmin = isUserAdmin(user);
 
   const emailGateResponse = isAdmin ? null : ensureVerifiedEmail(user);
@@ -235,7 +239,10 @@ export async function POST(request: Request) {
   if (!userId) {
     return unauthorizedResponse();
   }
-  const user = await currentUser();
+  const user = await safeCurrentUser();
+  if (!user) {
+    return unauthorizedResponse();
+  }
   const emailGateResponse = ensureVerifiedEmail(user);
   if (emailGateResponse) {
     return emailGateResponse;

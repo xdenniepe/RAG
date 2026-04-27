@@ -2,6 +2,22 @@ export const SOURCE_TYPES = ["ops", "restaurant"] as const;
 
 export type SourceType = (typeof SOURCE_TYPES)[number];
 
+export type WineUpsertRow = {
+  name: string;
+  producer: string | null;
+  region: string | null;
+  country: string | null;
+  grape_varietal: string | null;
+  vintage: string | null;
+  style: string | null;
+  body: string | null;
+  acidity: string | null;
+  tasting_notes: string | null;
+  approved_claims: string | null;
+  price_band: string | null;
+  metadata: Record<string, unknown>;
+};
+
 export type IngestionInput = {
   merchantId: string;
   sourceType: SourceType;

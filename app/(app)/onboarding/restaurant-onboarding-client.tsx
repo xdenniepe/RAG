@@ -19,6 +19,7 @@ import {
   onboardingRestaurantDetailsSchema,
   onboardingSubmissionSchema,
 } from "@/lib/validation/forms";
+import { ROUTES } from "@/lib/routes";
 
 const VIBE_OPTIONS = [
   "Fine Dining",
@@ -153,7 +154,7 @@ export function RestaurantOnboardingClient() {
           throw new Error(payload.error ?? "Failed to load onboarding profile.");
         }
         if (payload.profile?.isCompleted) {
-          router.replace("/dashboard");
+          router.replace(ROUTES.dashboard.merchant);
           return;
         }
         const userId = payload.userId ?? null;
@@ -505,7 +506,7 @@ export function RestaurantOnboardingClient() {
         );
       }
       setStatus("Onboarding complete. Redirecting...");
-      router.replace("/dashboard");
+      router.replace(ROUTES.dashboard.merchant);
     } catch (error) {
       setStatus(
         error instanceof Error ? error.message : "Failed to complete onboarding.",

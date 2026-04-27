@@ -1,24 +1,29 @@
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 
-import { RestaurantOnboardingClient } from "@/components/restaurant-onboarding-client";
+import { RestaurantOnboardingClient } from "./restaurant-onboarding-client";
+import { safeCurrentUser } from "@/lib/clerk-user";
 import { getOnboardingStatus } from "@/lib/onboarding/server";
+import { ROUTES } from "@/lib/routes";
 
 export default async function OnboardingPage() {
   const { userId } = await auth();
   if (!userId) {
-    redirect("/auth/sign-up");
+    redirect(ROUTES.auth.signUp);
   }
 
-  const user = await currentUser();
+  const user = await safeCurrentUser();
+  if (!user) {
+    redirect(ROUTES.auth.postSignIn);
+  }
   const isAdmin = user?.privateMetadata?.role === "admin";
   if (isAdmin) {
-    redirect("/dashboard");
+    redirect(ROUTES.ops.dashboard);
   }
 
   const onboarding = await getOnboardingStatus(userId);
   if (onboarding.isCompleted) {
-    redirect("/dashboard");
+    redirect(ROUTES.dashboard.merchant);
   }
 
   const isEmailVerified = user?.primaryEmailAddress?.verification?.status === "verified";

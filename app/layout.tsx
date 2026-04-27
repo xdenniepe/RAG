@@ -1,10 +1,12 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
 import { ui } from "@clerk/ui";
-import { auth, clerkClient, currentUser } from "@clerk/nextjs/server";
+import { auth, clerkClient } from "@clerk/nextjs/server";
 import { Geist, Geist_Mono } from "next/font/google";
+import { AuthNavigationGuardClient } from "@/app/auth/auth-navigation-guard-client";
 import { AuthSessionSync } from "@/components/auth-session-sync";
-import { TopbarAuthControls } from "@/components/topbar-auth-controls";
+import { NavAuthControls } from "@/components/nav-auth-controls";
+import { safeCurrentUser } from "@/lib/clerk-user";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -20,6 +22,13 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Tastefari RAG MVP",
   description: "Restaurant wine menu marketing copy powered by RAG.",
+};
+
+/** Ensures correct initial scale on phones/tablets; desktop browsers ignore device-width quirks. */
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 function parseCsvSet(value: string | undefined) {
@@ -52,24 +61,33 @@ export default async function RootLayout({
 }>) {
   const { userId } = await auth();
   let sessionRole = "";
+  let sessionDisplayName = "";
   if (userId) {
     try {
-      const user = await currentUser();
-      sessionRole =
-        typeof user?.privateMetadata?.role === "string" ? user.privateMetadata.role : "";
-      const desiredRole = resolveRoleFromEmail(user?.primaryEmailAddress?.emailAddress);
-      const existingRole =
-        typeof user?.privateMetadata?.role === "string" ? user.privateMetadata.role : "";
+      const user = await safeCurrentUser();
+      if (user) {
+        const primaryEmailAddress = user.primaryEmailAddress?.emailAddress ?? "";
+        sessionDisplayName =
+          user.fullName ||
+          user.firstName ||
+          (primaryEmailAddress.includes("@") ? primaryEmailAddress.split("@")[0] : "") ||
+          "Restaurant Name";
+        sessionRole =
+          typeof user.privateMetadata?.role === "string" ? user.privateMetadata.role : "";
+        const desiredRole = resolveRoleFromEmail(user.primaryEmailAddress?.emailAddress);
+        const existingRole =
+          typeof user.privateMetadata?.role === "string" ? user.privateMetadata.role : "";
 
-      if (existingRole !== desiredRole) {
-        const client = await clerkClient();
-        await client.users.updateUserMetadata(userId, {
-          privateMetadata: {
-            ...(user?.privateMetadata ?? {}),
-            role: desiredRole,
-          },
-        });
-        sessionRole = desiredRole;
+        if (existingRole !== desiredRole) {
+          const client = await clerkClient();
+          await client.users.updateUserMetadata(userId, {
+            privateMetadata: {
+              ...(user.privateMetadata ?? {}),
+              role: desiredRole,
+            },
+          });
+          sessionRole = desiredRole;
+        }
       }
     } catch (error) {
       console.error("Failed to sync Clerk role metadata in layout", error);
@@ -82,12 +100,12 @@ export default async function RootLayout({
         lang="en"
         className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       >
-        <body className="min-h-screen flex flex-col">
-          <AuthSessionSync role={sessionRole} />
-          <header className="flex items-center justify-end px-6 py-4">
-            <TopbarAuthControls />
-          </header>
-          <main className="flex-1 min-h-0 flex flex-col">{children}</main>
+        <body className="flex min-h-screen min-w-0 flex-col pb-[env(safe-area-inset-bottom)]">
+          <AuthNavigationGuardClient />
+          <AuthSessionSync role={sessionRole} displayName={sessionDisplayName} />
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+            <NavAuthControls>{children}</NavAuthControls>
+          </div>
         </body>
       </html>
     </ClerkProvider>

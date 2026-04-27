@@ -2,6 +2,7 @@ import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 
+import { MarketingSignedInRedirectClient } from "@/app/(marketing)/marketing-signed-in-redirect-client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +15,7 @@ export default async function MarketingPage() {
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col justify-center gap-6 px-6 py-12">
+      <MarketingSignedInRedirectClient />
       <Badge className="w-fit bg-white/20 text-white backdrop-blur-sm">
         Tastefari Development
       </Badge>

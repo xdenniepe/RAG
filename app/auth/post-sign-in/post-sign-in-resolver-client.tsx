@@ -3,15 +3,17 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
+import { ROUTES } from "@/lib/routes";
 
 type OnboardingResponse = {
+  isAdmin?: boolean;
   profile?: {
     isCompleted?: boolean;
   };
 };
 
-const MAX_RETRIES = 10;
-const RETRY_DELAY_MS = 300;
+const MAX_RETRIES = 20;
+const RETRY_DELAY_MS = 250;
 
 export function PostSignInResolverClient() {
   const router = useRouter();
@@ -24,7 +26,7 @@ export function PostSignInResolverClient() {
     }
 
     if (!isSignedIn) {
-      router.replace("/auth/sign-in");
+      router.replace(ROUTES.auth.signIn);
       return;
     }
 
@@ -47,7 +49,11 @@ export function PostSignInResolverClient() {
 
         if (response.ok) {
           const payload = (await response.json()) as OnboardingResponse;
-          router.replace(payload.profile?.isCompleted ? "/dashboard" : "/onboarding");
+          if (payload.isAdmin) {
+            router.replace(ROUTES.ops.dashboard);
+            return;
+          }
+          router.replace(payload.profile?.isCompleted ? ROUTES.dashboard.merchant : ROUTES.onboarding);
           return;
         }
 
@@ -59,7 +65,7 @@ export function PostSignInResolverClient() {
           return;
         }
 
-        router.replace("/onboarding");
+        router.replace(ROUTES.onboarding);
       } catch {
         if (cancelled) {
           return;
@@ -71,7 +77,7 @@ export function PostSignInResolverClient() {
           }, RETRY_DELAY_MS);
           return;
         }
-        router.replace("/onboarding");
+        router.replace(ROUTES.onboarding);
       }
     };
 

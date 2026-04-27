@@ -1,20 +1,24 @@
+@layer theme, base, clerk, components, utilities;
 @import "tailwindcss";
 @config "../tailwind.config.ts";
 
 :root {
   --radius: .625rem;
-  --background: #5e1f87;
+  --background: #4a1d5c;
+  /* #2d1435; */
   --surface: #fffffff2;
   --surface-elevated: #f8f7fb;
   --foreground: #030213;
+  --muted: rgb(0 0 0 / 0.6);
   --muted-foreground: #717182;
-  --link: #6b2b92;
+  --link: #2d1435;
   --input-background: #ffffff;
   --input-border: #e2e8f0;
   --input-border-hover: #cbd5e1;
   --control-foreground: #0a0a0a;
   --focus-ring: #8d4fc3;
-  --brand-primary-default: #4A165C;
+  --brand-primary-default: #2d1435;
+  --sidebar-nav-active: oklch(55.8% 0.288 302.321);
   --brand-accent-default: #C4A574;
   --onboarding-hero-subtitle: rgb(255 255 255 / 0.8);
   --swatch-border: rgb(0 0 0 / 0.1);
@@ -30,7 +34,7 @@ body {
 }
 
 html {
-  background: linear-gradient(135deg, #4a1d5c 0%, #5d2570 50%, #6b2d7f 100%);
+  background: #4a1d5c;
   background-attachment: fixed;
 }
 
