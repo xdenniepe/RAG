@@ -1,4 +1,3 @@
-import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 
 import { RestaurantOnboardingClient } from "./restaurant-onboarding-client";
@@ -7,11 +6,6 @@ import { getOnboardingStatus } from "@/lib/onboarding/server";
 import { ROUTES } from "@/lib/routes";
 
 export default async function OnboardingPage() {
-  const { userId } = await auth();
-  if (!userId) {
-    redirect(ROUTES.auth.signUp);
-  }
-
   const user = await safeCurrentUser();
   if (!user) {
     redirect(ROUTES.auth.postSignIn);
@@ -21,7 +15,7 @@ export default async function OnboardingPage() {
     redirect(ROUTES.ops.dashboard);
   }
 
-  const onboarding = await getOnboardingStatus(userId);
+  const onboarding = await getOnboardingStatus(user.id);
   if (onboarding.isCompleted) {
     redirect(ROUTES.dashboard.merchant);
   }

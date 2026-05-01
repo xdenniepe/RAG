@@ -1,4 +1,3 @@
-import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 
 import { SectionTabs } from "@/components/section-tabs";
@@ -14,11 +13,6 @@ import { getOnboardingStatus } from "@/lib/onboarding/server";
 import { ROUTES } from "@/lib/routes";
 
 export default async function OpsDashboardPage() {
-  const { userId } = await auth();
-  if (!userId) {
-    redirect(ROUTES.auth.signIn);
-  }
-
   const user = await safeCurrentUser();
   if (!user) {
     redirect(ROUTES.auth.postSignIn);
@@ -26,7 +20,7 @@ export default async function OpsDashboardPage() {
 
   const isAdmin = user.privateMetadata?.role === "admin";
   if (!isAdmin) {
-    const onboarding = await getOnboardingStatus(userId);
+    const onboarding = await getOnboardingStatus(user.id);
     if (!onboarding.isCompleted) {
       redirect(ROUTES.onboarding);
     }
@@ -74,7 +68,7 @@ export default async function OpsDashboardPage() {
   ];
 
   return (
-    <main className="flex-1 w-full max-w-none flex-col gap-8 bg-[#faf9f7] px-4 py-8 sm:px-6">
+    <main className="flex-1 w-full max-w-none flex-col gap-8 bg-[var(--page-canvas)] px-4 py-8 sm:px-6">
       <div className="flex flex-col w-full max-w-7xl mx-auto space-y-8">
         <section className="grid w-full grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
           {analyticsCards.map((card) => (

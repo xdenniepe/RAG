@@ -27,13 +27,13 @@ export function ChoiceCard({
       type="button"
       onClick={onSelect}
       className={cn(
-        "flex flex-col rounded-xl border border-[var(--input-border)] bg-[var(--surface)] p-5 text-left transition",
-        "hover:border-[var(--brand-primary-default)]/25 hover:bg-[var(--surface-elevated)]",
+        "group flex flex-col rounded-xl border border-[var(--input-border)] bg-[var(--surface)] p-5 text-left text-[var(--secondary)] transition",
+        "hover:border-[var(--secondary)] hover:bg-[var(--secondary)]/10 hover:text-[var(--secondary)]",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 ring-offset-[var(--surface)]",
         className,
       )}
     >
-      <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-[var(--background)]/[0.3]">
+      <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-[var(--secondary)]/15 text-[var(--secondary)] transition-colors group-hover:bg-[var(--secondary)] group-hover:text-white [&_svg]:text-current">
         {icon}
       </div>
       <div className="mt-4 flex items-center gap-2">

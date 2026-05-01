@@ -1,4 +1,3 @@
-import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 
 import { safeCurrentUser } from "@/lib/clerk-user";
@@ -6,11 +5,6 @@ import { getOnboardingStatus } from "@/lib/onboarding/server";
 import { ROUTES } from "@/lib/routes";
 
 export default async function DashboardPage() {
-  const { userId } = await auth();
-  if (!userId) {
-    redirect(ROUTES.auth.signIn);
-  }
-
   const user = await safeCurrentUser();
   if (!user) {
     redirect(ROUTES.auth.postSignIn);
@@ -21,13 +15,13 @@ export default async function DashboardPage() {
     redirect(ROUTES.ops.dashboard);
   }
 
-  const onboarding = await getOnboardingStatus(userId);
+  const onboarding = await getOnboardingStatus(user.id);
   if (!onboarding.isCompleted) {
     redirect(ROUTES.onboarding);
   }
 
   return (
-    <main className="flex-1 w-full max-w-none flex-col gap-8 bg-[#faf9f7] px-6 py-10">
+    <main className="flex-1 w-full max-w-none flex-col gap-8 bg-[var(--page-canvas)] px-6 py-10">
       <div className="space-y-2">
         <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
         <p className="text-sm text-[var(--muted-foreground)]">

@@ -17,9 +17,15 @@
   --input-border-hover: #cbd5e1;
   --control-foreground: #0a0a0a;
   --focus-ring: #8d4fc3;
+  --secondary: oklch(55.8% 0.288 302.321);
+  --secondary-hover: oklch(49.6% 0.265 301.924);
   --brand-primary-default: #2d1435;
   --sidebar-nav-active: oklch(55.8% 0.288 302.321);
   --brand-accent-default: #C4A574;
+  --page-canvas: #faf9f7;
+  --ops-divider-accent: rgb(139 21 255 / 0.5);
+  --profile-avatar-bg: #b486ff;
+  --white: #ffffff;
   --onboarding-hero-subtitle: rgb(255 255 255 / 0.8);
   --swatch-border: rgb(0 0 0 / 0.1);
   --shadow-soft: 0 2px 6px rgba(40, 21, 52, 0.12),
@@ -34,7 +40,7 @@ body {
 }
 
 html {
-  background: #4a1d5c;
+  background: var(--background);
   background-attachment: fixed;
 }
 
@@ -148,8 +154,8 @@ a:focus-visible {
   align-items: center !important;
   justify-content: center !important;
   border-radius: 0.75rem !important;
-  background: var(--link) !important;
-  color: #fff !important;
+  background: var(--secondary) !important;
+  color: var(--white) !important;
   box-shadow: none !important;
   font-size: 0.875rem !important;
   font-weight: 600 !important;
@@ -157,7 +163,8 @@ a:focus-visible {
 }
 
 .signup-card-cleanup .cl-formButtonPrimary:hover {
-  opacity: 0.9 !important;
+  background: var(--secondary-hover) !important;
+  opacity: 1 !important;
 }
 
 .signup-card-cleanup .cl-formFieldLabel {

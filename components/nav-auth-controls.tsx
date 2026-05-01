@@ -19,10 +19,31 @@ type NavAuthControlsProps = {
   children: ReactNode;
 };
 
+function isPrivateAppRoute(pathname: string) {
+  return (
+    pathname === ROUTES.dashboard.root ||
+    pathname.startsWith(`${ROUTES.dashboard.root}/`) ||
+    pathname === ROUTES.onboarding ||
+    pathname.startsWith(`${ROUTES.onboarding}/`) ||
+    pathname === ROUTES.ops.root ||
+    pathname.startsWith(`${ROUTES.ops.root}/`)
+  );
+}
+
+function isOpsEditorRoute(pathname: string) {
+  if (!pathname.startsWith(`${ROUTES.ops.root}/`)) {
+    return false;
+  }
+
+  return /\/(add|edit)(\/|$)/.test(pathname);
+}
+
 export function NavAuthControls({ children }: NavAuthControlsProps) {
   const pathname = usePathname();
   const { isLoaded, userId } = useAuth();
   const [sessionDisplayName, setSessionDisplayName] = useState("Restaurant Name");
+  const [isNotFoundRoute, setIsNotFoundRoute] = useState(false);
+  const [isRouteCheckComplete, setIsRouteCheckComplete] = useState(false);
   const hiddenUserButtonContainerRef = useRef<HTMLDivElement | null>(null);
   const shouldHideNavAuthControls =
     NAV_AUTH_CONTROLS_HIDDEN_ROUTES.includes(pathname as (typeof NAV_AUTH_CONTROLS_HIDDEN_ROUTES)[number]) ||
@@ -51,11 +72,50 @@ export function NavAuthControls({ children }: NavAuthControlsProps) {
     };
   }, [refreshSessionDisplayName]);
 
+  useEffect(() => {
+    const abortController = new AbortController();
+
+    setIsRouteCheckComplete(false);
+    setIsNotFoundRoute(false);
+
+    fetch(pathname, {
+      method: "HEAD",
+      cache: "no-store",
+      signal: abortController.signal,
+    })
+      .then((response) => {
+        setIsNotFoundRoute(response.status === 404);
+      })
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          return;
+        }
+        setIsNotFoundRoute(false);
+      })
+      .finally(() => {
+        if (!abortController.signal.aborted) {
+          setIsRouteCheckComplete(true);
+        }
+      });
+
+    return () => {
+      abortController.abort();
+    };
+  }, [pathname]);
+
   const openUserButtonMenu = useCallback(() => {
     hiddenUserButtonContainerRef.current?.querySelector("button")?.click();
   }, []);
 
   if (shouldHideNavAuthControls) {
+    return <>{children}</>;
+  }
+
+  if (isOpsEditorRoute(pathname)) {
+    return <>{children}</>;
+  }
+
+  if (!isLoaded || !userId || !isPrivateAppRoute(pathname) || !isRouteCheckComplete || isNotFoundRoute) {
     return <>{children}</>;
   }
 
@@ -157,7 +217,7 @@ export function NavAuthControls({ children }: NavAuthControlsProps) {
             })}
           </nav>
         </div>
-        <div className="border-t border-[#8b15ff]/50">
+        <div className="border-t border-[var(--ops-divider-accent)]">
           <div className="space-y-3 px-2 pt-3 md:space-y-4 md:px-3 md:pt-4">
             {!isLoaded ? (
               <div className="h-16 w-full rounded-lg border border-white/20" />
@@ -167,7 +227,7 @@ export function NavAuthControls({ children }: NavAuthControlsProps) {
                 onClick={openUserButtonMenu}
                 className="flex w-full items-center gap-3 rounded-lg px-1 text-left text-white transition hover:bg-white/10"
               >
-                <span className="flex size-9 items-center justify-center rounded-full bg-[#b486ff] text-sm font-semibold text-white md:size-10 md:text-base">
+                <span className="flex size-9 items-center justify-center rounded-full bg-[var(--profile-avatar-bg)] text-sm font-semibold text-white md:size-10 md:text-base">
                   {sessionDisplayName.charAt(0)}
                 </span>
                 <span className="min-w-0 py-0.5 md:py-1">

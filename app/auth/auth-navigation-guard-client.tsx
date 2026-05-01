@@ -13,14 +13,6 @@ function isSignUpPath(pathname: string) {
   return pathname === "/auth/sign-up" || pathname.startsWith("/auth/sign-up/");
 }
 
-function isProtectedPath(pathname: string) {
-  return (
-    pathname.startsWith(ROUTES.dashboard.root) ||
-    pathname.startsWith(ROUTES.ops.root) ||
-    pathname.startsWith(ROUTES.onboarding)
-  );
-}
-
 export function AuthNavigationGuardClient() {
   const router = useRouter();
   const pathname = usePathname();
@@ -38,7 +30,7 @@ export function AuthNavigationGuardClient() {
       return;
     }
 
-    if (pathname === ROUTES.auth.postSignIn || isProtectedPath(pathname)) {
+    if (pathname === ROUTES.auth.postSignIn) {
       router.replace(ROUTES.auth.signIn);
     }
   }, [isLoaded, isSignedIn, pathname, router]);
